@@ -1,0 +1,3 @@
+[submodule "gsplat.js"]
+	path = gsplat.js
+	url = https://github.com/baolong281/gsplat.js.git
