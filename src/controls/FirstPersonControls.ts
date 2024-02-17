@@ -9,9 +9,9 @@ class FirstPersonControls {
     minZoom: number = 0.1;
     maxZoom: number = 30;
     lookSpeed: number = 1;
-    panSpeed: number = 1;
+    panSpeed: number = 0.75;
     zoomSpeed: number = 1;
-    dampening: number = 0.12;
+    dampening: number = 0.9;
     setCameraTarget: (newTarget: Vector3) => void = () => {};
     update: () => void;
     dispose: () => void;
@@ -46,32 +46,6 @@ class FirstPersonControls {
         const keys: { [key: string]: boolean } = {};
 
         let isUpdatingCamera = false;
-
-        const onCameraChange = () => {
-            if (isUpdatingCamera) return;
-
-            const eulerRotation = camera.rotation.toEuler();
-            desiredAlpha = -eulerRotation.y;
-            desiredBeta = -eulerRotation.x;
-
-            const x = camera.position.x - desiredRadius * Math.sin(desiredAlpha) * Math.cos(desiredBeta);
-            const y = camera.position.y + desiredRadius * Math.sin(desiredBeta);
-            const z = camera.position.z + desiredRadius * Math.cos(desiredAlpha) * Math.cos(desiredBeta);
-
-            desiredTarget = new Vector3(x, y, z);
-        };
-
-        camera.addEventListener("objectChanged", onCameraChange);
-
-        this.setCameraTarget = (newTarget: Vector3) => {
-            const dx = newTarget.x - camera.position.x;
-            const dy = newTarget.y - camera.position.y;
-            const dz = newTarget.z - camera.position.z;
-            desiredRadius = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            desiredBeta = Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
-            desiredAlpha = -Math.atan2(dx, dz);
-            desiredTarget = new Vector3(newTarget.x, newTarget.y, newTarget.z);
-        };
 
         const computeZoomNorm = () => {
             return 0.1 + (0.9 * (desiredRadius - this.minZoom)) / (this.maxZoom - this.minZoom);
@@ -210,18 +184,11 @@ class FirstPersonControls {
 
         this.update = () => {
             isUpdatingCamera = true;
-            alpha = lerp(alpha, desiredAlpha, this.dampening);
-            beta = lerp(beta, desiredBeta, this.dampening);
-            radius = lerp(radius, desiredRadius, this.dampening);
-            target = target.lerp(desiredTarget, this.dampening);
+
             panX = lerp(panX, desiredPanX, this.dampening);
             panY = lerp(panY, desiredPanY, this.dampening);
 
-            const x = target.x + radius * Math.sin(alpha) * Math.cos(beta);
-            const y = target.y - radius * Math.sin(beta);
-            const z = target.z - radius * Math.cos(alpha) * Math.cos(beta);
-            camera.position = new Vector3(x, y, z);
-
+            camera.position = new Vector3(target.x, target.y, target.z);
             camera.rotation = Quaternion.FromEuler(new Vector3(-panY, panX, 0));
 
             // const direction = target.subtract(camera.position).normalize();
@@ -229,20 +196,19 @@ class FirstPersonControls {
             // const ry = Math.atan2(direction.x, direction.z);
             // camera.rotation = Quaternion.FromEuler(new Vector3(rx, ry, 0));
 
-            const moveSpeed = 0.025;
-            const rotateSpeed = 0.01;
+            const moveSpeed = 0.2;
 
             const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
             const up = new Vector3(0, 1, 0);
 
-            if (keys["KeyS"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
-            if (keys["KeyW"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
-            if (keys["KeyA"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
-            if (keys["KeyD"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
-            if (keys["Space"]) desiredTarget = desiredTarget.subtract(up.multiply(moveSpeed));
-            if (keys["Shift"]) desiredTarget = desiredTarget.add(up.multiply(moveSpeed));
+            if (keys["KeyS"]) target = target.add(forward.multiply(moveSpeed));
+            if (keys["KeyW"]) target = target.subtract(forward.multiply(moveSpeed));
+            if (keys["KeyA"]) target = target.subtract(right.multiply(moveSpeed));
+            if (keys["KeyD"]) target = target.add(right.multiply(moveSpeed));
+            if (keys["Space"]) target = target.subtract(up.multiply(moveSpeed));
+            if (keys["Shift"]) target = target.add(up.multiply(moveSpeed));
 
             isUpdatingCamera = false;
         };
