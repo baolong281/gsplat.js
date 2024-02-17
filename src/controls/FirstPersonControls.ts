@@ -84,6 +84,8 @@ class FirstPersonControls {
             if (e.code === "ArrowDown") keys["KeyS"] = true;
             if (e.code === "ArrowLeft") keys["KeyA"] = true;
             if (e.code === "ArrowRight") keys["KeyD"] = true;
+            if (e.code === "Space") keys["Space"] = true;
+            if (e.code === "ShiftLeft") keys["Shift"] = true;
         };
 
         const onKeyUp = (e: KeyboardEvent) => {
@@ -92,6 +94,8 @@ class FirstPersonControls {
             if (e.code === "ArrowDown") keys["KeyS"] = false;
             if (e.code === "ArrowLeft") keys["KeyA"] = false;
             if (e.code === "ArrowRight") keys["KeyD"] = false;
+            if (e.code === "Space") keys["Space"] = false;
+            if (e.code === "ShiftLeft") keys["Shift"] = false;
         };
 
         const pi_2 = Math.PI / 2;
@@ -231,19 +235,14 @@ class FirstPersonControls {
             const R = Matrix3.RotationFromQuaternion(camera.rotation).buffer;
             const forward = new Vector3(-R[2], -R[5], -R[8]);
             const right = new Vector3(R[0], R[3], R[6]);
+            const up = new Vector3(0, 1, 0);
 
             if (keys["KeyS"]) desiredTarget = desiredTarget.add(forward.multiply(moveSpeed));
             if (keys["KeyW"]) desiredTarget = desiredTarget.subtract(forward.multiply(moveSpeed));
             if (keys["KeyA"]) desiredTarget = desiredTarget.subtract(right.multiply(moveSpeed));
             if (keys["KeyD"]) desiredTarget = desiredTarget.add(right.multiply(moveSpeed));
-
-            // Add rotation with 'e' and 'q' for horizontal rotation
-            if (keys["KeyE"]) desiredAlpha += rotateSpeed;
-            if (keys["KeyQ"]) desiredAlpha -= rotateSpeed;
-
-            // Add rotation with 'r' and 'f' for vertical rotation
-            if (keys["KeyR"]) desiredBeta += rotateSpeed;
-            if (keys["KeyF"]) desiredBeta -= rotateSpeed;
+            if (keys["Space"]) desiredTarget = desiredTarget.subtract(up.multiply(moveSpeed));
+            if (keys["Shift"]) desiredTarget = desiredTarget.add(up.multiply(moveSpeed));
 
             isUpdatingCamera = false;
         };
